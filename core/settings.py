@@ -27,6 +27,8 @@ DEBUG = False
 
 ALLOWED_HOSTS = ["*", "hr-saas-production.up.railway.app"]
 
+CSRF_TRUSTED_ORIGINS = ['https://hr-saas-production-276db73e.up.railway.app']
+
 
 # Application definition
 

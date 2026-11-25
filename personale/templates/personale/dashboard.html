@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard HR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .navbar { background-color: #212529; }
+        .navbar-brand { color: white !important; font-weight: bold; }
+        .card { border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .card-header { background-color: #fff; border-bottom: 2px solid #f0f0f0; font-weight: bold; }
+        .stato-attesa { color: #fd7e14; font-weight: bold; }
+        .stato-approvata { color: #198754; font-weight: bold; }
+        .stato-rifiutata { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">HR SaaS</a>
+            <div class="d-flex">
+                <span class="navbar-text text-white me-3">
+                    Azienda: <strong>{{ azienda.nome }}</strong>
+                </span>
+                <a href="/gestione-ferie/" class="btn btn-warning btn-sm me-2">Gestione Ferie (HR)</a>
+                <a href="/admin/" class="btn btn-outline-light btn-sm me-2">Admin</a>
+                <a href="/admin/logout/" class="btn btn-danger btn-sm">Esci</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <h2 class="mb-4">Benvenuto, {{ request.user.username }}!</h2>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center"><span>I tuoi dipendenti</span><a href="/aggiungi-dipendente/" class="btn btn-success btn-sm">+ Aggiungi Dipendente</a></div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nome</th>
+                                <th>Cognome</th>
+                                <th>Ruolo</th>
+                                <th>Ferie Residue</th><th class="text-end">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dipendente in dipendenti %}
+                            <tr>
+                                <td>{{ dipendente.nome }}</td>
+                                <td>{{ dipendente.cognome }}</td>
+                                <td>{{ dipendente.ruolo }}</td>
+                                <td><span class="badge bg-info text-dark">{{ dipendente.ferie_residue }} gg</span></td><td class="text-end"><a href="/elimina-dipendente/{{ dipendente.id }}/" class="btn btn-danger btn-sm" onclick="return confirm('Sei sicuro di voler eliminare questo dipendente?');">Elimina</a></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">Nessun dipendente trovato.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card">
+                    <div class="card-header">Richiedi Ferie</div>
+                    <div class="card-body">
+                        <form method="POST" action="">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">Dipendente</label>
+                                <select name="dipendente_id" class="form-select" required>
+                                    {% for dipendente in dipendenti %}
+                                        <option value="{{ dipendente.id }}">{{ dipendente.nome }} {{ dipendente.cognome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Data Inizio</label>
+                                <input type="date" name="data_inizio" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Data Fine</label>
+                                <input type="date" name="data_fine" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Note (opzionale)</label>
+                                <textarea name="note" class="form-control" rows="2"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Invia Richiesta</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="card">
+                    <div class="card-header">Richieste di Ferie Recenti</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Dipendente</th>
+                                        <th>Dal</th>
+                                        <th>Al</th>
+                                        <th>Stato</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for richiesta in richieste %}
+                                    <tr>
+                                        <td>{{ richiesta.dipendente.nome }}</td>
+                                        <td>{{ richiesta.data_inizio|date:"d/m/y" }}</td>
+                                        <td>{{ richiesta.data_fine|date:"d/m/y" }}</td>
+                                        <td>
+                                            {% if richiesta.stato == 'In attesa' %}
+                                                <span class="stato-attesa">{{ richiesta.stato }}</span>
+                                            {% elif richiesta.stato == 'Approvata' %}
+                                                <span class="stato-approvata">{{ richiesta.stato }}</span>
+                                            {% else %}
+                                                <span class="stato-rifiutata">{{ richiesta.stato }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">Nessuna richiesta.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
